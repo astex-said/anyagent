@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include anyagent *.proto
+recursive-include anyagent *.py
+recursive-include echo_agent *.py
+recursive-include echo_agent *.md
+recursive-include echo_agent *.txt
+recursive-include echo_agent *.yml
+recursive-include echo_agent *.json
+include echo_agent/Dockerfile
+include echo_agent/docker-compose.yml

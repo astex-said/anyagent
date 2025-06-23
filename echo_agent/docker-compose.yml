@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  echo_agent:
+    build: 
+      context: ..
+      dockerfile: echo_agent/Dockerfile
+    ports:
+      - "50061:50061"
+    environment:
+      - GRPC_PORT=50061
+      # Add your environment variables here
+    volumes:
+      - ./data:/app/echo_agent/data  # For persistent storage
+    restart: unless-stopped
+
+# Uncomment if you need a database
+#  database:
+#    image: postgres:15
+#    environment:
+#      POSTGRES_DB: echo_agent
+#      POSTGRES_USER: agent
+#      POSTGRES_PASSWORD: password
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    ports:
+#      - "5432:5432"
+
+#volumes:
+#  postgres_data:

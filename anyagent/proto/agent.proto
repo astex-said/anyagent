@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+package agent;
+
+service AgentService {
+  rpc Help (AgentRequest) returns (stream AgentResponse);
+
+  // Request-response: generate one message
+  rpc Execute (AgentRequest) returns (AgentResponse);
+
+  // Streaming: agent sends multiple messages back
+  rpc ExecuteStream (stream AgentRequest) returns (stream AgentResponse);
+}
+
+// Intro and related messages removed - not needed
+
+// ============================
+// 📌 Telegram Content Types
+// ============================
+
+message TextContent {
+  string text = 1;
+}
+
+message ImageContent {
+  bytes image_data = 1;
+  optional string caption = 2;
+  optional string filename = 3;
+}
+
+message VideoContent {
+  bytes video_data = 1;
+  optional string caption = 2;
+  optional string filename = 3;
+}
+
+message AudioContent {
+  bytes audio_data = 1;
+  optional string filename = 2;
+}
+
+message DocumentContent {
+  bytes file_data = 1;
+  optional string filename = 2;
+}
+
+message LocationContent {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+// ============================
+// 📌 Telegram Actions (User Typing, Uploading, etc.)
+// ============================
+
+enum TelegramAction {
+  UNKNOWN_ACTION = 0;
+  TYPING = 1;
+  UPLOADING_PHOTO = 2;
+  UPLOADING_VIDEO = 3;
+  UPLOADING_DOCUMENT = 4;
+  UPLOADING_AUDIO = 5;
+  RECORDING_VIDEO = 6;
+  RECORDING_AUDIO = 7;
+  UPLOADING_ANIMATION = 8;
+}
+
+// ============================
+// 📌 Telegram Keyboard Structures
+// ============================
+
+message InlineButton {
+  string text = 1;
+  string callback_data = 2;
+}
+
+message InlineButtonRow {
+  repeated InlineButton buttons = 1;
+}
+
+message InlineKeyboard {
+  repeated InlineButtonRow rows = 1;
+}
+
+// ReplyKeyboard removed - not supported in gRPC interface
+
+// ============================
+// 📌 TelegramMessage Structure
+// ============================
+
+message TelegramMessage {
+  optional string message_id = 1;
+
+  oneof content {
+    TextContent text = 2;
+    ImageContent image = 3;
+    VideoContent video = 4;
+    AudioContent audio = 5;
+    DocumentContent document = 6;
+    LocationContent location = 7;
+  }
+
+  optional InlineKeyboard inline_keyboard = 8;
+  // reply_keyboard removed - not supported in gRPC interface
+
+  // Optional action (e.g. typing, uploading_photo)
+  optional TelegramAction action = 10;
+}
+
+
+// ============================
+// 📌 Callback Query (For Inline Button Presses)
+// ============================
+
+message CallbackQuery {
+  string callback_data = 1;
+  TelegramMessage original_message = 2;
+}
+
+// ============================
+// 📌 Reply Message (Handling User Replies)
+// ============================
+
+message ReplyMessage {
+  TelegramMessage original_message = 1;
+}
+
+// ============================
+// 📌 Context Metadata (Providing Chat History & Metadata)
+// ============================
+
+message ContextMessage {
+  string role = 1;  // "user" or "assistant" or "tool"
+  string content = 2;
+  string timestamp = 3;  // ISO 8601 format
+  optional string name = 4;
+  optional string tool_call_id = 5;
+  repeated google.protobuf.Struct tool_calls = 6;
+  optional google.protobuf.Struct function_call = 7;
+}
+
+message Context {
+  int64 chat_id = 1;  // Unique chat identifier
+  repeated ContextMessage messages = 2;  // Message history
+  map<string, google.protobuf.Value> metadata = 3;  // Any other useful data
+}
+
+
+// ============================
+// 📌 Pay-Per-Use Payment Request (No Subscriptions)
+// ============================
+
+message UsagePaymentRequest {
+  string key = 1;  // Must match a defined pricing key (e.g., "image_generation")
+  int64 quantity = 2; 
+}
+
+// ============================
+// 📌 Agent Request (Sent from Users to Agents)
+// ============================
+
+message AgentRequest {
+  optional TelegramMessage telegram_message = 1;
+  optional CallbackQuery callback_query = 2;
+  optional ReplyMessage reply_message = 3;
+  optional Context context = 4;
+  optional bool paid = 6; // Indicates if the request was already paid
+  optional string language_code = 7; 
+  optional int64 user_id = 8; // User identifier for tracking and personalization
+}
+
+// ============================
+// 📌 Agent Response (Sent from Agents to Users)
+// ============================
+
+message AgentResponse {
+  optional TelegramMessage telegram_message = 1;
+  optional UsagePaymentRequest payment_request = 2; // If agent wants payment
+  optional ContextMessage memory = 4;
+}

@@ -1,0 +1,2 @@
+anyagent>=1.0.0
+# Add your specific dependencies here
