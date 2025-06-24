@@ -5,12 +5,12 @@ This package provides all the common infrastructure needed to build Telegram age
 that communicate via gRPC, allowing developers to focus only on the agent logic.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.4"
 __author__ = "AnyAgent Team"
 
 # Core framework components
 from .base import BaseAgent
-from .server import AgentServer
+from .server import AgentServer, serve_agent
 from .schema import *
 from .utils import *
 
@@ -20,6 +20,7 @@ __all__ = [
     # Core classes
     "BaseAgent",
     "AgentServer", 
+    "serve_agent",
     
     # Schema models
     "AgentRequest",

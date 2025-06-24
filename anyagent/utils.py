@@ -13,8 +13,24 @@ from .schema import (
     AudioContent, DocumentContent, LocationContent, InlineKeyboard,
     TelegramAction, CallbackQuery, ReplyMessage, Context,
     ContextMessage, AgentRequest, AgentResponse,
-    dict_to_struct, struct_to_dict
+    dict_to_struct, struct_to_dict, InlineButton, InlineButtonRow
 )
+
+# Маппинг protobuf числовых значений в Python строковые enum
+PROTOBUF_TO_PYTHON_ACTION = {
+    0: TelegramAction.UNKNOWN_ACTION,
+    1: TelegramAction.TYPING,
+    2: TelegramAction.UPLOADING_PHOTO,
+    3: TelegramAction.UPLOADING_VIDEO,
+    4: TelegramAction.UPLOADING_DOCUMENT,
+    5: TelegramAction.UPLOADING_AUDIO,
+    6: TelegramAction.RECORDING_VIDEO,
+    7: TelegramAction.RECORDING_AUDIO,
+    8: TelegramAction.UPLOADING_ANIMATION,
+}
+
+# Обратный маппинг для конвертации Python enum в protobuf числа
+PYTHON_TO_PROTOBUF_ACTION = {v: k for k, v in PROTOBUF_TO_PYTHON_ACTION.items()}
 
 
 def generate_message_id() -> str:
@@ -152,8 +168,8 @@ def _grpc_to_pydantic_msg(grpc_msg: agent_pb2.TelegramMessage) -> TelegramMessag
     if grpc_msg.HasField('inline_keyboard'):
         inline_keyboard = _convert_inline_keyboard_grpc(grpc_msg.inline_keyboard)
     
-    # Convert action
-    action = TelegramAction(grpc_msg.action) if grpc_msg.HasField('action') else TelegramAction.UNKNOWN_ACTION
+    # Convert action - используем правильный маппинг из чисел в строки
+    action = PROTOBUF_TO_PYTHON_ACTION.get(grpc_msg.action, TelegramAction.UNKNOWN_ACTION) if grpc_msg.HasField('action') else TelegramAction.UNKNOWN_ACTION
     
     return TelegramMessage(
         message_id=grpc_msg.message_id if grpc_msg.HasField('message_id') else None,
@@ -203,9 +219,9 @@ def _pydantic_to_grpc_msg(pydantic_msg: TelegramMessage) -> agent_pb2.TelegramMe
     if pydantic_msg.inline_keyboard:
         grpc_msg.inline_keyboard.CopyFrom(_convert_inline_keyboard_pydantic(pydantic_msg.inline_keyboard))
     
-    # Set action
+    # Set action - используем правильный маппинг из строк в числа
     if pydantic_msg.action:
-        grpc_msg.action = agent_pb2.TelegramAction.Value(pydantic_msg.action.value)
+        grpc_msg.action = PYTHON_TO_PROTOBUF_ACTION.get(pydantic_msg.action, 0)
     
     return grpc_msg
 
@@ -216,11 +232,13 @@ def _convert_inline_keyboard_grpc(grpc_keyboard: agent_pb2.InlineKeyboard) -> In
     for grpc_row in grpc_keyboard.rows:
         buttons = []
         for grpc_button in grpc_row.buttons:
-            buttons.append({
-                "text": grpc_button.text,
-                "callback_data": grpc_button.callback_data
-            })
-        rows.append({"buttons": buttons})
+            button = InlineButton(
+                text=grpc_button.text,
+                callback_data=grpc_button.callback_data
+            )
+            buttons.append(button)
+        row = InlineButtonRow(buttons=buttons)
+        rows.append(row)
     return InlineKeyboard(rows=rows)
 
 
@@ -229,10 +247,10 @@ def _convert_inline_keyboard_pydantic(pydantic_keyboard: InlineKeyboard) -> agen
     grpc_keyboard = agent_pb2.InlineKeyboard()
     for row in pydantic_keyboard.rows:
         grpc_row = agent_pb2.InlineButtonRow()
-        for button in row["buttons"]:
+        for button in row.buttons:
             grpc_button = agent_pb2.InlineButton()
-            grpc_button.text = button["text"]
-            grpc_button.callback_data = button["callback_data"]
+            grpc_button.text = button.text
+            grpc_button.callback_data = button.callback_data
             grpc_row.buttons.append(grpc_button)
         grpc_keyboard.rows.append(grpc_row)
     return grpc_keyboard
