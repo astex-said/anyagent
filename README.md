@@ -2,13 +2,21 @@
 
 **Simple. Fast. Production-ready.**
 
-Build Telegram agents with minimal code. Like Express.js for chatbots.
+Build & Monetize AI Agents effortlessly. 
 
 ## Installation
 
 ```bash
 pip install anyagent-ai
 ```
+
+## Try It Live
+
+🤖 **Test on Telegram:** [@AnyAgentBot](https://t.me/anyagentbot)
+
+🔊 **Try Echo Agent:** [Start Echo Bot](https://t.me/anyagentbot?start=agent12)
+
+See how the echo agent works in real-time! This demonstrates all the message types, payment requests, and interactive features shown in the examples below.
 
 ## Quick Start
 
@@ -47,7 +55,7 @@ AgentServer(MyAgent()).run()  # Starts on port 50051
 - **🔄 Streaming responses** - Real-time message streaming
 - **🐳 Docker ready** - Production deployment included
 - **⚡ gRPC based** - High performance protocol
-- **🌐 Visit our website** - [anyagent.app](https://anyagent.app)
+- **🌐 Visit our website** - [https://anyagent.app](https://anyagent.app)
 
 ## Payment Requests
 
@@ -276,5 +284,6 @@ MIT License - build anything you want.
 
 ## Links
 
+- 🌐 [Website](https://anyagent.app)
 - 🐙 [GitHub](https://github.com/astex-said/anyagent)
 - 📦 [PyPI](https://pypi.org/project/anyagent-ai/)

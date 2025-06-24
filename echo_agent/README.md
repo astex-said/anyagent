@@ -12,6 +12,14 @@ This tutorial teaches you to build production-ready Telegram agents by creating 
 - **Streaming responses** - real-time bidirectional communication
 - **Zero-config setup** - minimal code, maximum functionality
 
+## 🤖 Try It Live
+
+🤖 **Try in Telegram:** [@AnyAgentBot](https://t.me/anyagentbot)
+
+🔊 **Dialog with Echo Agent:** [Start Echo Bot](https://t.me/anyagentbot?start=agent12)
+
+Send messages, images, documents, or locations to see this tutorial's echo agent in action! This live demo shows everything you'll learn to build in this tutorial.
+
 ## 📋 Prerequisites
 
 - Python 3.8+
@@ -648,6 +656,7 @@ Check out our [full echo agent implementation](agent.py) that demonstrates all t
 
 ## 🤝 Need Help?
 
+- 🌐 [AnyAgent Website](https://anyagent.app)
 - 📖 [Framework Documentation](../README.md)
 - 💰 [Payment System Guide](../PAYMENT_GUIDE.md)
 - 🐛 [Report Issues](https://github.com/astex-said/anyagent/issues)
