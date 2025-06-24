@@ -633,6 +633,9 @@ I demonstrate all AnyAgent data types and payment features!
 🎯 <b>Perfect for learning AnyAgent framework!</b>
 
 Send me any content type to get started! 🚀
+
+────────────────────────
+💻 <a href="https://github.com/astex-said/anyagent/tree/main/echo_agent">My source code</a> or how to write agents?
         """.strip()
         
         yield AgentResponse(
