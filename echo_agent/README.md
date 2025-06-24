@@ -1,6 +1,6 @@
 # Echo Agent Tutorial - Build Your First AnyAgent
 
-**Learn to build Telegram agents with the AnyAgent framework through a complete echo bot example.**
+**Learn to build AI agents with the AnyAgent framework through a complete echo bot example.**
 
 ## 🎯 What You'll Learn
 
@@ -23,7 +23,7 @@ This tutorial teaches you to build production-ready Telegram agents by creating 
 ### 1. Install AnyAgent
 
 ```bash
-pip install anyagent
+pip install anyagent-ai
 ```
 
 ### 2. Create Your Agent
