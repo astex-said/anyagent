@@ -1,2 +1,2 @@
-anyagent>=1.0.0
+anyagent-ai>=1.0.0
 # Add your specific dependencies here
