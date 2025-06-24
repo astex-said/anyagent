@@ -23,7 +23,7 @@ This tutorial teaches you to build production-ready Telegram agents by creating 
 ### 1. Install AnyAgent
 
 ```bash
-pip install anyagent
+pip install anyagent-ai
 ```
 
 ### 2. Create Your Agent
