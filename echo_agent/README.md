@@ -115,6 +115,12 @@ class AgentRequest:
     context: Optional[Context]                   # Conversation history
 ```
 
+**Context Details:**
+- `context.messages` - Conversation history between user and assistant
+- `context.system_messages` - System context for personalization (optional):
+  - `[0]` - Current date/time in user's timezone
+  - `[1]` - User's custom instructions and preferences
+
 ### AgentResponse Structure
 
 ```python
@@ -126,40 +132,76 @@ class AgentResponse:
 
 ### Memory System
 
-The `memory` field is used to store **meaningful conversational messages** in the platform's memory system. 
+The memory system maintains conversation history between user and agent:
+
+- **`request.context.messages`** - Contains full conversation history up to current user message
+- **`response.memory`** - Adds your agent's response to this conversation history
+- Only meaningful responses should be added to memory (not progress updates)
+
+**How it works:**
+1. User sends message → gets added to `context.messages` as `role="user"`
+2. Agent processes and responds
+3. If agent sets `memory` field → gets added to `context.messages` as `role="assistant"`
+4. Next user message includes updated conversation history
 
 **❌ Don't store in memory:**
-- Progress bars: "Processing... 50%"
-- Status updates: "Downloading..."
-- Temporary UI messages: "Please wait..."
+- Progress updates: "Processing... 50%"
+- Status messages: "Downloading..."
+- Temporary UI: "Please wait..."
 - System notifications
 
 **✅ Store in memory:**
-- User questions and agent answers
+- Final answers and analysis results
 - Important decisions made
-- Analysis results
-- Final outputs
+- Completed tasks and outcomes
 
 ```python
 async def execute(self, request):
+    # Check conversation history
+    if request.context and request.context.messages:
+        print(f"Conversation has {len(request.context.messages)} messages")
+        last_message = request.context.messages[-1]
+        print(f"Last message: {last_message.role}: {last_message.content}")
+    
+    # Optional: Use system context for personalization
+    user_timezone = None
+    custom_instructions = None
+    if request.context and request.context.system_messages:
+        if len(request.context.system_messages) > 0:
+            # First system message contains user's current time
+            user_timezone = request.context.system_messages[0].content
+            print(f"User time: {user_timezone}")
+        
+        if len(request.context.system_messages) > 1:
+            # Second system message contains user's custom preferences
+            custom_instructions = request.context.system_messages[1].content
+            print(f"User preferences: {custom_instructions}")
+    
     # Progress message - DON'T store in memory
     yield AgentResponse(
         telegram_message=TelegramMessage(
             text=TextContent(text="🔄 Analyzing your image...")
         )
-        # No memory field - this is just a progress update
+        # No memory field - this won't be added to conversation history
     )
     
-    # Final result - STORE in memory
+    # Final result - STORE in memory (can use personalization data)
     analysis_result = "The image shows a cat sitting on a windowsill"
+    response_text = f"🖼️ Analysis: {analysis_result}"
+    
+    # Optional: Add timezone-aware greeting
+    if user_timezone and "morning" in user_timezone.lower():
+        response_text = f"Good morning! {response_text}"
+    
     yield AgentResponse(
         telegram_message=TelegramMessage(
-            text=TextContent(text=f"🖼️ Analysis: {analysis_result}")
+            text=TextContent(text=response_text)
         ),
         memory=ContextMessage(
             role="assistant", 
-            content=f"Image analysis result: {analysis_result}"
+            content=f"Image analysis: {analysis_result}"
         )
+        # This will be added to conversation history for future requests
     )
 ```
 

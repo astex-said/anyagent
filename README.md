@@ -215,16 +215,39 @@ class AgentRequest:
     context: Optional[Context]                   # Conversation history
 ```
 
+**Context Structure:**
+- `context.messages` - Full conversation history (user ↔ assistant messages)
+- `context.system_messages` - System context for personalization (optional):
+  - First message: Current date/time in user's timezone
+  - Second message: User's custom instructions/preferences
+
 ### AgentResponse
 
 ```python
 class AgentResponse:
     telegram_message: Optional[TelegramMessage]     # Message to send
     payment_request: Optional[UsagePaymentRequest]  # Request payment
-    memory: Optional[ContextMessage]                # Store meaningful content in conversation memory
+    memory: Optional[ContextMessage]                # Add assistant's response to conversation history
 ```
 
-**Memory Usage:** Use the `memory` field only for meaningful conversational content (final answers, analysis results). Don't store progress updates, loading messages, or temporary UI elements.
+**Memory System:** 
+- `context.messages` in `AgentRequest` contains the full conversation history
+- `memory` field in `AgentResponse` adds your agent's response to this history
+- Only store meaningful content (final answers, analysis results)
+- Don't store progress updates, loading messages, or temporary UI elements
+
+```python
+# Example: Final response with memory
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        text=TextContent(text="Analysis complete: The image shows a cat")
+    ),
+    memory=ContextMessage(
+        role="assistant",
+        content="Image analysis: The image shows a cat sitting on a windowsill"
+    )
+)
+```
 
 ### TelegramMessage
 
