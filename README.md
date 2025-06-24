@@ -1,4 +1,4 @@
-# AnyAgent Framework
+# AnyAgent AI Framework
 
 **Simple. Fast. Production-ready.**
 
@@ -7,7 +7,7 @@ Build Telegram agents with minimal code. Like Express.js for chatbots.
 ## Installation
 
 ```bash
-pip install anyagent
+pip install anyagent-ai
 ```
 
 ## Quick Start
@@ -47,6 +47,7 @@ AgentServer(MyAgent()).run()  # Starts on port 50051
 - **🔄 Streaming responses** - Real-time message streaming
 - **🐳 Docker ready** - Production deployment included
 - **⚡ gRPC based** - High performance protocol
+- **🌐 Visit our website** - [anyagent.app](https://anyagent.app)
 
 ## Payment Requests
 
@@ -276,6 +277,6 @@ MIT License - build anything you want.
 ## Links
 
 - 🐙 [GitHub](https://github.com/your-username/anyagent)
-- 📦 [PyPI](https://pypi.org/project/anyagent/)
+- 📦 [PyPI](https://pypi.org/project/anyagent-ai/)
 - 📚 [Documentation](https://docs.anyagent.dev)
 - 💬 [Discord](https://discord.gg/anyagent)
