@@ -276,7 +276,5 @@ MIT License - build anything you want.
 
 ## Links
 
-- 🐙 [GitHub](https://github.com/your-username/anyagent)
+- 🐙 [GitHub](https://github.com/astex-said/anyagent)
 - 📦 [PyPI](https://pypi.org/project/anyagent-ai/)
-- 📚 [Documentation](https://docs.anyagent.dev)
-- 💬 [Discord](https://discord.gg/anyagent)
