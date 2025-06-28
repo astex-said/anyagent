@@ -129,7 +129,23 @@ class TelegramAction(str, Enum):
 class InlineButton(BaseModel):
     """A single inline keyboard button."""
     text: str
-    callback_data: str
+    callback_data: Optional[str] = None
+    url: Optional[str] = None
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.callback_data is not None and self.url is not None:
+            raise ValueError("A button cannot have both callback_data and url")
+    
+    @classmethod
+    def callback_button(cls, text: str, callback_data: str) -> "InlineButton":
+        """Create a callback button."""
+        return cls(text=text, callback_data=callback_data)
+    
+    @classmethod
+    def url_button(cls, text: str, url: str) -> "InlineButton":
+        """Create a URL button."""
+        return cls(text=text, url=url)
 
 
 class InlineButtonRow(BaseModel):

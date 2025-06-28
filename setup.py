@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="anyagent-ai",
-    version="1.0.5",
+    version="1.0.8",
     description="A standardized framework for building gRPC-based Telegram agents",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

@@ -15,7 +15,7 @@ from anyagent import (
     TelegramMessage, TextContent, ImageContent, VideoContent, 
     AudioContent, DocumentContent, LocationContent,
     TelegramAction, UsagePaymentRequest,
-    InlineKeyboard, CallbackQuery
+    InlineKeyboard, InlineButton, InlineButtonRow, CallbackQuery
 )
 
 # Configure logging
@@ -149,10 +149,14 @@ class EchoAgent(BaseAgent):
                 text=TextContent(text=echo_response),
                 action=TelegramAction.TYPING,
                 inline_keyboard=InlineKeyboard(rows=[
-                    {"buttons": [
-                        {"text": "🔁 Echo Again", "callback_data": f"echo_text:{text[:20]}"},
-                        {"text": "📊 Stats", "callback_data": "stats"}
-                    ]}
+                    InlineButtonRow(buttons=[
+                        InlineButton.callback_button("🔁 Echo Again", f"echo_text:{text[:20]}"),
+                        InlineButton.callback_button("📊 Stats", "stats")
+                    ]),
+                    InlineButtonRow(buttons=[
+                        InlineButton.url_button("📖 GitHub", "https://github.com/astex-said/anyagent"),
+                        InlineButton.url_button("🌐 Website", "https://anyagent.app")
+                    ])
                 ])
             )
         )
@@ -409,10 +413,11 @@ class EchoAgent(BaseAgent):
                 text=TextContent(text=analysis),
                 action=TelegramAction.TYPING,
                 inline_keyboard=InlineKeyboard(rows=[
-                    {"buttons": [
-                        {"text": "🗺️ Map View", "callback_data": f"map:{lat},{lon}"},
-                        {"text": "🌍 Geocode", "callback_data": f"geocode:{lat},{lon}"}
-                    ]}
+                    InlineButtonRow(buttons=[
+                        InlineButton.callback_button("🗺️ Map View", f"map:{lat},{lon}"),
+                        InlineButton.callback_button("🌍 Geocode", f"geocode:{lat},{lon}"),
+                        InlineButton.url_button("🌐 Open Street Map", f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}")
+                    ])
                 ])
             )
         )
@@ -456,10 +461,14 @@ class EchoAgent(BaseAgent):
                     text=TextContent(text=stats_text),
                     action=TelegramAction.TYPING,
                     inline_keyboard=InlineKeyboard(rows=[
-                        {"buttons": [
-                            {"text": "🔄 Back to Demo", "callback_data": "back_demo"},
-                            {"text": "❓ Help", "callback_data": "help"}
-                        ]}
+                        InlineButtonRow(buttons=[
+                            InlineButton.callback_button("🔄 Back to Demo", "back_demo"),
+                            InlineButton.callback_button("❓ Help", "help")
+                        ]),
+                        InlineButtonRow(buttons=[
+                            InlineButton.url_button("📖 GitHub", "https://github.com/astex-said/anyagent"),
+                            InlineButton.url_button("🌐 Website", "https://anyagent.app")
+                        ])
                     ])
                 )
             )
@@ -498,10 +507,10 @@ class EchoAgent(BaseAgent):
                     text=TextContent(text=echo_response),
                     action=TelegramAction.TYPING,
                     inline_keyboard=InlineKeyboard(rows=[
-                        {"buttons": [
-                            {"text": "🔁 Echo Again", "callback_data": f"echo_text:{text_to_echo[:20]}"},
-                            {"text": "📊 Stats", "callback_data": "stats"}
-                        ]}
+                        InlineButtonRow(buttons=[
+                            InlineButton.callback_button("🔁 Echo Again", f"echo_text:{text_to_echo[:20]}"),
+                            InlineButton.callback_button("📊 Stats", "stats")
+                        ])
                     ])
                 )
             )
@@ -528,10 +537,11 @@ class EchoAgent(BaseAgent):
                     text=TextContent(text=map_response),
                     action=TelegramAction.TYPING,
                     inline_keyboard=InlineKeyboard(rows=[
-                        {"buttons": [
-                            {"text": "🌍 Geocode", "callback_data": f"geocode:{coords}"},
-                            {"text": "🔙 Back", "callback_data": "back_demo"}
-                        ]}
+                        InlineButtonRow(buttons=[
+                            InlineButton.callback_button("🌍 Geocode", f"geocode:{coords}"),
+                            InlineButton.callback_button("🔙 Back", "back_demo"),
+                            InlineButton.url_button("🗺️ Google Maps", f"https://maps.google.com/?q={coords}")
+                        ])
                     ])
                 )
             )
@@ -576,10 +586,11 @@ class EchoAgent(BaseAgent):
                     text=TextContent(text=geocode_response),
                     action=TelegramAction.TYPING,
                     inline_keyboard=InlineKeyboard(rows=[
-                        {"buttons": [
-                            {"text": "🗺️ Map View", "callback_data": f"map:{coords}"},
-                            {"text": "🔙 Back", "callback_data": "back_demo"}
-                        ]}
+                        InlineButtonRow(buttons=[
+                            InlineButton.callback_button("🗺️ Map View", f"map:{coords}"),
+                            InlineButton.callback_button("🔙 Back", "back_demo"),
+                            InlineButton.url_button("🌍 Apple Maps", f"https://maps.apple.com/?q={coords}")
+                        ])
                     ])
                 )
             )

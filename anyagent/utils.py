@@ -234,7 +234,8 @@ def _convert_inline_keyboard_grpc(grpc_keyboard: agent_pb2.InlineKeyboard) -> In
         for grpc_button in grpc_row.buttons:
             button = InlineButton(
                 text=grpc_button.text,
-                callback_data=grpc_button.callback_data
+                callback_data=grpc_button.callback_data if grpc_button.HasField('callback_data') else None,
+                url=grpc_button.url if grpc_button.HasField('url') else None
             )
             buttons.append(button)
         row = InlineButtonRow(buttons=buttons)
@@ -250,7 +251,10 @@ def _convert_inline_keyboard_pydantic(pydantic_keyboard: InlineKeyboard) -> agen
         for button in row.buttons:
             grpc_button = agent_pb2.InlineButton()
             grpc_button.text = button.text
-            grpc_button.callback_data = button.callback_data
+            if button.callback_data:
+                grpc_button.callback_data = button.callback_data
+            elif button.url:
+                grpc_button.url = button.url
             grpc_row.buttons.append(grpc_button)
         grpc_keyboard.rows.append(grpc_row)
     return grpc_keyboard

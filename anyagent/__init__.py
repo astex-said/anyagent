@@ -33,6 +33,8 @@ __all__ = [
     "DocumentContent",
     "LocationContent",
     "InlineKeyboard",
+    "InlineButton",
+    "InlineButtonRow",
     "TelegramAction",
     "CallbackQuery",
     "ReplyMessage",

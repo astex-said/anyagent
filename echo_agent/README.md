@@ -1,706 +1,476 @@
-# Echo Agent Tutorial - Build Your First AnyAgent
+# Echo Agent - Complete AnyAgent Example
 
-**Learn to build AI agents with the AnyAgent framework through a complete echo bot example.**
+A comprehensive demonstration agent that showcases all features of the AnyAgent Framework. This agent echoes back all message types, demonstrates payment integration, interactive UI components, and provides a complete reference implementation.
 
-## 🎯 What You'll Learn
+## 🌟 Features Demonstrated
 
-This tutorial teaches you to build production-ready Telegram agents by creating an echo bot that demonstrates:
-
-- **All message types** - text, images, videos, audio, documents, locations
-- **Payment system** - pay-per-use with quantity-based billing
-- **Interactive UI** - buttons, callbacks, keyboards
-- **Streaming responses** - real-time bidirectional communication
-- **Zero-config setup** - minimal code, maximum functionality
-
-## 🤖 Try It Live
-
-🤖 **Try in Telegram:** [@AnyAgentBot](https://t.me/anyagentbot)
-
-🔊 **Dialog with Echo Agent:** [Start Echo Bot](https://t.me/anyagentbot?start=agent12)
-
-Send messages, images, documents, or locations to see this tutorial's echo agent in action! This live demo shows everything you'll learn to build in this tutorial.
-
-## 📋 Prerequisites
-
-- Python 3.8+
-- Basic async/await knowledge
-- Understanding of Telegram bots (helpful but not required)
+- ✅ **All Message Types**: Text, Image, Video, Audio, Document, Location
+- ✅ **Interactive Keyboards**: Callback buttons and URL buttons
+- ✅ **Payment System**: Credit-based usage with free limits
+- ✅ **Context & Memory**: Conversation history tracking
+- ✅ **Streaming Responses**: Real-time message updates
+- ✅ **Bot Actions**: Typing indicators and upload statuses
+- ✅ **Error Handling**: Graceful error recovery
+- ✅ **Help System**: Interactive help with examples
 
 ## 🚀 Quick Start
 
-### 1. Install AnyAgent
+### Using Docker (Recommended)
 
 ```bash
-pip install anyagent-ai
+# Clone the repository
+git clone https://github.com/astex-said/anyagent-framework.git
+cd anyagent-framework/echo_agent
+
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f
 ```
 
-### 2. Create Your Agent
+### Manual Installation
+
+```bash
+# Install dependencies
+pip install anyagent-ai>=1.0.8
+
+# Run the agent
+python main.py
+```
+
+## 📁 Project Structure
+
+```
+echo_agent/
+├── agent.py           # Main agent implementation
+├── main.py           # Entry point and server setup
+├── requirements.txt  # Python dependencies
+├── Dockerfile       # Docker container definition
+├── docker-compose.yml # Docker Compose configuration
+└── README.md        # This file
+```
+
+## 💻 Code Walkthrough
+
+### 1. Basic Agent Structure
 
 ```python
-# agent.py
-from anyagent import BaseAgent, AgentRequest, AgentResponse, TelegramMessage, TextContent
+from anyagent import BaseAgent, AgentResponse, TelegramMessage, TextContent
+import logging
 
 class EchoAgent(BaseAgent):
     def __init__(self):
-        super().__init__()  # Zero config!
+        super().__init__()
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("🔊 Echo Agent initialized")
     
     async def execute(self, request):
-        """Main agent logic - handle incoming messages"""
-        message = request.telegram_message
-        
-        if message and message.text:
-            yield AgentResponse(
-                telegram_message=TelegramMessage(
-                    text=TextContent(text=f"Echo: {message.text.text}")
-                )
-            )
-    
-    async def help(self, request):
-        """Help command response"""
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text="I'm an echo bot! Send me any message and I'll echo it back.")
-            )
-        )
+        """Main request handler"""
+        # Handle different request types
+        if request.telegram_message:
+            async for response in self._handle_message(request):
+                yield response
 ```
 
-### 3. Run Your Agent
+### 2. Handling Text Messages
 
 ```python
-# main.py
-from anyagent import AgentServer
-from agent import EchoAgent
-
-agent = EchoAgent()
-server = AgentServer(agent, port=50051)
-server.run()
-```
-
-### 4. Test It
-
-```bash
-python main.py
-# Your agent is now running on port 50051!
-```
-
-## 📚 Core Concepts
-
-### BaseAgent Class
-
-Every agent inherits from `BaseAgent` and implements two methods:
-
-```python
-class MyAgent(BaseAgent):
-    def __init__(self):
-        super().__init__()  # Uses self.__class__.__name__ automatically
+async def _handle_text(self, text_content, paid):
+    """Echo text messages with interactive keyboard"""
+    text = text_content.text
     
-    async def execute(self, request: AgentRequest) -> AsyncGenerator[AgentResponse, None]:
-        # Handle user messages
-        pass
+    # Create response with analysis
+    echo_response = f"""🔊 Text Echo
+
+📥 Received: {text}
+
+📊 Analysis:
+• Length: {len(text)} characters
+• Words: {len(text.split())}
+• Type: Text message
+
+🔄 Echo: {text}"""
     
-    async def help(self, request: AgentRequest) -> AsyncGenerator[AgentResponse, None]:
-        # Provide help information
-        pass
-```
-
-### AgentRequest Structure
-
-```python
-class AgentRequest:
-    telegram_message: Optional[TelegramMessage]  # User's message
-    callback_query: Optional[CallbackQuery]      # Button clicks
-    user_id: int                                 # User identifier
-    paid: bool                                   # Payment status
-    language_code: Optional[str]                 # User's language
-    context: Optional[Context]                   # Conversation history
-```
-
-**Context Details:**
-- `context.messages` - Conversation history between user and assistant
-- `context.system_messages` - System context for personalization (optional):
-  - `[0]` - Current date/time in user's timezone
-  - `[1]` - User's custom instructions and preferences
-
-### AgentResponse Structure
-
-```python
-class AgentResponse:
-    telegram_message: Optional[TelegramMessage]     # Message to send
-    payment_request: Optional[UsagePaymentRequest]  # Request payment
-    memory: Optional[ContextMessage]                # Store meaningful messages in conversation memory
-```
-
-### Memory System
-
-The memory system maintains conversation history between user and agent:
-
-- **`request.context.messages`** - Contains full conversation history up to current user message
-- **`response.memory`** - Adds your agent's response to this conversation history
-- Only meaningful responses should be added to memory (not progress updates)
-
-**How it works:**
-1. User sends message → gets added to `context.messages` as `role="user"`
-2. Agent processes and responds
-3. If agent sets `memory` field → gets added to `context.messages` as `role="assistant"`
-4. Next user message includes updated conversation history
-
-**❌ Don't store in memory:**
-- Progress updates: "Processing... 50%"
-- Status messages: "Downloading..."
-- Temporary UI: "Please wait..."
-- System notifications
-
-**✅ Store in memory:**
-- Final answers and analysis results
-- Important decisions made
-- Completed tasks and outcomes
-
-```python
-async def execute(self, request):
-    # Check conversation history
-    if request.context and request.context.messages:
-        print(f"Conversation has {len(request.context.messages)} messages")
-        last_message = request.context.messages[-1]
-        print(f"Last message: {last_message.role}: {last_message.content}")
-    
-    # Optional: Use system context for personalization
-    user_timezone = None
-    custom_instructions = None
-    if request.context and request.context.system_messages:
-        if len(request.context.system_messages) > 0:
-            # First system message contains user's current time
-            user_timezone = request.context.system_messages[0].content
-            print(f"User time: {user_timezone}")
-        
-        if len(request.context.system_messages) > 1:
-            # Second system message contains user's custom preferences
-            custom_instructions = request.context.system_messages[1].content
-            print(f"User preferences: {custom_instructions}")
-    
-    # Progress message - DON'T store in memory
-    yield AgentResponse(
-        telegram_message=TelegramMessage(
-            text=TextContent(text="🔄 Analyzing your image...")
-        )
-        # No memory field - this won't be added to conversation history
-    )
-    
-    # Final result - STORE in memory (can use personalization data)
-    analysis_result = "The image shows a cat sitting on a windowsill"
-    response_text = f"🖼️ Analysis: {analysis_result}"
-    
-    # Optional: Add timezone-aware greeting
-    if user_timezone and "morning" in user_timezone.lower():
-        response_text = f"Good morning! {response_text}"
+    # Add interactive keyboard
+    keyboard = InlineKeyboard(rows=[
+        InlineButtonRow(buttons=[
+            InlineButton.callback_button("🔁 Echo Again", f"echo_text:{text[:20]}"),
+            InlineButton.callback_button("📊 Stats", "stats")
+        ]),
+        InlineButtonRow(buttons=[
+            InlineButton.url_button("📖 GitHub", "https://github.com/astex-said/anyagent"),
+            InlineButton.url_button("🌐 Website", "https://anyagent.app")
+        ])
+    ])
     
     yield AgentResponse(
         telegram_message=TelegramMessage(
-            text=TextContent(text=response_text)
-        ),
-        memory=ContextMessage(
-            role="assistant", 
-            content=f"Image analysis: {analysis_result}"
+            text=TextContent(text=echo_response),
+            action=TelegramAction.TYPING,
+            inline_keyboard=keyboard
         )
-        # This will be added to conversation history for future requests
     )
 ```
 
-### Database Management
-
-**Important:** The framework no longer includes built-in user data storage. You have the `user_id` field to identify users and should implement your own database:
+### 3. Handling Images
 
 ```python
-import sqlite3
-
-class UserDatabase:
-    def __init__(self):
-        self.conn = sqlite3.connect('users.db')
-        self.conn.execute('''
-            CREATE TABLE IF NOT EXISTS user_data (
-                user_id INTEGER PRIMARY KEY,
-                data TEXT
+async def _handle_image(self, image_content, paid):
+    """Process and echo images"""
+    # Check payment status
+    if not paid:
+        yield AgentResponse(
+            payment_request=UsagePaymentRequest(
+                key="image_processing",
+                quantity=25  # 25 credits per image
             )
-        ''')
-    
-    def get_user_data(self, user_id: int) -> dict:
-        cursor = self.conn.execute('SELECT data FROM user_data WHERE user_id = ?', (user_id,))
-        row = cursor.fetchone()
-        return json.loads(row[0]) if row else {}
-    
-    def save_user_data(self, user_id: int, data: dict):
-        self.conn.execute(
-            'INSERT OR REPLACE INTO user_data (user_id, data) VALUES (?, ?)',
-            (user_id, json.dumps(data))
         )
-        self.conn.commit()
-
-# Usage in your agent
-db = UserDatabase()
-
-async def execute(self, request):
-    user_data = db.get_user_data(request.user_id)
+        return
     
-    # Your logic here
-    user_data['last_message'] = request.telegram_message.text.text
+    # Show upload status
+    yield AgentResponse(
+        telegram_message=TelegramMessage(
+            text=TextContent(text="🖼️ Processing image..."),
+            action=TelegramAction.UPLOADING_PHOTO
+        )
+    )
     
-    db.save_user_data(request.user_id, user_data)
+    # Echo the image back
+    yield AgentResponse(
+        telegram_message=TelegramMessage(
+            image=ImageContent(
+                image_data=image_content.image_data,
+                caption=f"🔊 Image Echo\n\n"
+                       f"📸 Original caption: {image_content.caption or 'No caption'}\n"
+                       f"📁 Filename: {image_content.filename or 'Unknown'}\n"
+                       f"📏 Size: {len(image_content.image_data)} bytes",
+                filename=f"echo_{image_content.filename}" if image_content.filename else "echo_image.jpg"
+            )
+        )
+    )
 ```
 
-## 📱 Message Types Tutorial
-
-### 1. Text Messages
+### 4. Handling Button Callbacks
 
 ```python
-async def execute(self, request):
-    message = request.telegram_message
+async def _handle_callback_query(self, request):
+    """Handle button press events"""
+    callback_data = request.callback_query.callback_data
     
-    if message and message.text:
-        text = message.text.text
-        word_count = len(text.split())
+    if callback_data == "stats":
+        # Show agent statistics
+        stats_text = """📊 Echo Agent Statistics
+
+🤖 Agent Info:
+• Version: 1.0.0
+• Status: ✅ Active
+• Framework: AnyAgent v1.0.8
+
+📈 Session Stats:
+• Messages processed: Dynamic
+• Uptime: Dynamic
+• Response time: <100ms
+
+🎯 Capabilities:
+• Text echoing ✅
+• Image processing ✅
+• Video handling ✅
+• Audio playback ✅
+• Document sharing ✅
+• Location mapping ✅
+
+💰 Credit System:
+• Text: 5 credits
+• Image: 25 credits
+• Video: 100 credits
+• Audio: 50 credits
+• Document: 15 credits
+• Location: 10 credits"""
         
         yield AgentResponse(
             telegram_message=TelegramMessage(
-                text=TextContent(
-                    text=f"📝 You sent: {text}\\n📊 Words: {word_count}"
-                )
-            )
-        )
-```
-
-### 2. Image Messages
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.image:
-        image_data = message.image.image_data
-        filename = message.image.filename or "image.jpg"
-        caption = message.image.caption or "No caption"
-        
-        # Analyze image
-        size_kb = len(image_data) // 1024
-        
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(
-                    text=f"🖼️ Image received!\\n"
-                         f"📁 Name: {filename}\\n"
-                         f"📏 Size: {size_kb} KB\\n"
-                         f"📝 Caption: {caption}"
-                )
-            )
-        )
-```
-
-### 3. Video Messages
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.video:
-        video_data = message.video.video_data
-        filename = message.video.filename or "video.mp4"
-        
-        # Echo the video back with analysis
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                video=VideoContent(
-                    video_data=video_data,
-                    filename=f"echo_{filename}",
-                    caption=f"🎥 Video echoed back! Size: {len(video_data)} bytes"
-                )
-            )
-        )
-```
-
-### 4. Audio Messages
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.audio:
-        audio_data = message.audio.audio_data
-        filename = message.audio.filename or "audio.mp3"
-        
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(
-                    text=f"🎵 Audio received: {filename}\\n"
-                         f"📏 Size: {len(audio_data)} bytes\\n"
-                         f"🎯 Ready for processing!"
-                )
-            )
-        )
-```
-
-### 5. Document Messages
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.document:
-        file_data = message.document.file_data
-        filename = message.document.filename or "document"
-        
-        # Simple file type detection
-        file_type = "Unknown"
-        if filename.endswith('.pdf'):
-            file_type = "PDF Document"
-        elif filename.endswith('.txt'):
-            file_type = "Text File"
-        elif filename.endswith('.docx'):
-            file_type = "Word Document"
-        
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(
-                    text=f"📄 Document: {filename}\\n"
-                         f"📋 Type: {file_type}\\n"
-                         f"📏 Size: {len(file_data)} bytes"
-                )
-            )
-        )
-```
-
-### 6. Location Messages
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.location:
-        lat = message.location.latitude
-        lon = message.location.longitude
-        
-        # Simple city detection
-        city = "Unknown location"
-        if abs(lat - 40.7128) < 1 and abs(lon + 74.0060) < 1:
-            city = "New York, USA"
-        elif abs(lat - 51.5074) < 1 and abs(lon + 0.1278) < 1:
-            city = "London, UK"
-        
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(
-                    text=f"📍 Location: {lat:.4f}, {lon:.4f}\\n"
-                         f"🏙️ Near: {city}\\n"
-                         f"🗺️ Coordinates received!"
-                )
-            )
-        )
-```
-
-## 💰 Payment System
-
-### Basic Payment Request
-
-```python
-from anyagent import UsagePaymentRequest
-
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.text:
-        # Request payment for text processing
-        if not request.paid:
-            yield AgentResponse(
-                payment_request=UsagePaymentRequest(
-                    key="text_analysis",  # Payment key (configured in web console)
-                    quantity=1            # Number of operations
-                )
-            )
-        
-        # Process regardless (bidirectional streaming)
-        result = analyze_text(message.text.text)
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text=result)
-            )
-        )
-```
-
-### Variable Quantity Example
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.audio:
-        # Estimate audio duration in minutes
-        audio_duration_minutes = estimate_duration(message.audio.audio_data)
-        
-        # Charge per minute of audio
-        if not request.paid:
-            yield AgentResponse(
-                payment_request=UsagePaymentRequest(
-                    key="audio_transcription",
-                    quantity=audio_duration_minutes  # e.g., 5 for 5 minutes
-                )
-            )
-        
-        # Process audio
-        transcription = transcribe_audio(message.audio.audio_data)
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text=f"Transcription: {transcription}")
-            )
-        )
-
-def estimate_duration(audio_data: bytes) -> int:
-    # Simplified: assume 1 minute per 100KB (adjust for your needs)
-    estimated_minutes = max(1, len(audio_data) // (100 * 1024))
-    return estimated_minutes
-```
-
-### Payment Configuration
-
-In your web console, configure pricing:
-
-```sql
--- Audio transcription: 2 credits per minute
-INSERT INTO agent_pricing (agent_name, key, credits_per_unit, description) 
-VALUES ('EchoAgent', 'audio_transcription', 2, 'Audio transcription per minute');
-
--- Text analysis: 5 credits per analysis
-INSERT INTO agent_pricing (agent_name, key, credits_per_unit, description) 
-VALUES ('EchoAgent', 'text_analysis', 5, 'Text analysis per operation');
-```
-
-## 🎛️ Interactive UI Components
-
-### Inline Keyboards
-
-```python
-from anyagent import InlineKeyboard
-
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.text:
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text="Choose an action:"),
+                text=TextContent(text=stats_text),
                 inline_keyboard=InlineKeyboard(rows=[
-                    {"buttons": [
-                        {"text": "🔁 Echo Again", "callback_data": f"echo:{message.text.text}"},
-                        {"text": "📊 Analyze", "callback_data": f"analyze:{message.text.text}"}
-                    ]},
-                    {"buttons": [
-                        {"text": "❓ Help", "callback_data": "help"},
-                        {"text": "📈 Stats", "callback_data": "stats"}
-                    ]}
+                    InlineButtonRow(buttons=[
+                        InlineButton.callback_button("🔄 Back to Demo", "back_demo"),
+                        InlineButton.callback_button("❓ Help", "help")
+                    ])
                 ])
             )
         )
 ```
 
-### Handling Button Clicks
+### 5. Payment Integration
 
 ```python
-async def execute(self, request):
-    # Handle button callbacks
-    if request.callback_query:
-        callback_data = request.callback_query.callback_data
-        
-        if callback_data.startswith("echo:"):
-            text = callback_data[5:]  # Remove "echo:" prefix
-            yield AgentResponse(
-                telegram_message=TelegramMessage(
-                    text=TextContent(text=f"🔁 Echoed: {text}")
-                )
-            )
-            
-        elif callback_data.startswith("analyze:"):
-            text = callback_data[8:]  # Remove "analyze:" prefix
-            analysis = f"📊 Analysis: {len(text)} chars, {len(text.split())} words"
-            yield AgentResponse(
-                telegram_message=TelegramMessage(
-                    text=TextContent(text=analysis)
-                )
-            )
-            
-        elif callback_data == "help":
-            yield AgentResponse(
-                telegram_message=TelegramMessage(
-                    text=TextContent(text="❓ I can echo and analyze your messages!")
-                )
-            )
-            
-        elif callback_data == "stats":
-            yield AgentResponse(
-                telegram_message=TelegramMessage(
-                    text=TextContent(text="📈 Stats: Echo Agent v1.0 - Ready to serve!")
-                )
-            )
-        return
-    
-    # Handle regular messages...
-```
+# Credit costs for different content types
+CREDIT_COSTS = {
+    "text": 5,
+    "image": 25,
+    "video": 100,
+    "audio": 50,
+    "document": 15,
+    "location": 10
+}
 
-## 🔄 Streaming Responses
-
-### Multiple Messages
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message and message.text:
-        # First response - processing (no memory)
+async def _check_payment(self, content_type, paid):
+    """Check if user has sufficient credits"""
+    if not paid:
+        cost = CREDIT_COSTS.get(content_type, 10)
         yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text="🔄 Processing your message..."),
-                action=TelegramAction.TYPING
-            )
-            # No memory - this is just a progress update
-        )
-        
-        # Simulate processing delay
-        await asyncio.sleep(1)
-        
-        # Second response - result (store in memory)
-        result = f"✅ Done! Your message: {message.text.text}"
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text=result)
-            ),
-            memory=ContextMessage(
-                role="assistant",
-                content=f"Processed user message: {message.text.text}"
+            payment_request=UsagePaymentRequest(
+                key=f"{content_type}_processing",
+                quantity=cost
             )
         )
+        return False
+    return True
 ```
 
-### Progress Updates
+### 6. Help Command Handler
 
 ```python
-async def execute(self, request):
-    message = request.telegram_message
+async def help(self, request):
+    """Custom help command implementation"""
+    help_text = """🔊 Echo Agent - Complete Demo
+
+This agent demonstrates all AnyAgent features:
+
+📝 Text Messages
+Send any text and I'll echo it back with analysis.
+
+🖼️ Images (25 credits)
+Send photos to see image echo with metadata.
+
+🎥 Videos (100 credits)
+Share videos for playback demonstration.
+
+🎵 Audio (50 credits)
+Send voice messages or music files.
+
+📄 Documents (15 credits)
+Share any file type for document handling.
+
+📍 Locations (10 credits)
+Send your location for map integration.
+
+🎯 Try these features:
+1️⃣ Send "Hello World" → Get text echo
+2️⃣ Send a photo → See image processing
+3️⃣ Press buttons → Interactive UI demo
+4️⃣ Send location → Map integration
+
+💡 Each content type has different credit costs.
+Free tier includes limited usage for testing."""
     
-    if message and message.video:
-        # Progress updates - DON'T store in memory
-        steps = ["📥 Downloading", "🎬 Analyzing", "📊 Processing"]
-        
-        for i, step in enumerate(steps):
-            yield AgentResponse(
-                telegram_message=TelegramMessage(
-                    text=TextContent(text=f"{step} ({i+1}/{len(steps)})"),
-                    action=TelegramAction.UPLOADING_VIDEO
-                )
-                # No memory field - these are just progress updates
-            )
-            await asyncio.sleep(0.5)
-        
-        # Final result - STORE in memory
-        video_analysis = "Video contains 3 scenes: intro, main content, outro"
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text=f"🎥 Analysis: {video_analysis}")
-            ),
-            memory=ContextMessage(
-                role="assistant",
-                content=f"Video analysis: {video_analysis}"
-            )
-        )
-```
-
-## 🐳 Docker Deployment
-
-### Dockerfile
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-EXPOSE 50051
-
-CMD ["python", "main.py"]
-```
-
-### docker-compose.yml
-```yaml
-version: '3.8'
-services:
-  echo-agent:
-    build: .
-    ports:
-      - "50051:50051"
-    restart: unless-stopped
-    environment:
-      - GRPC_PORT=50051
-```
-
-### Run with Docker
-```bash
-docker-compose up -d
-```
-
-## 🧪 Testing Your Agent
-
-### Manual Testing
-```python
-# test_client.py
-import asyncio
-import grpc
-from anyagent.proto import agent_pb2, agent_pb2_grpc
-
-async def test_agent():
-    channel = grpc.aio.insecure_channel("localhost:50051")
-    stub = agent_pb2_grpc.AgentServiceStub(channel)
+    keyboard = InlineKeyboard(rows=[
+        InlineButtonRow(buttons=[
+            InlineButton.callback_button("📊 View Stats", "stats"),
+            InlineButton.callback_button("🎮 Start Demo", "demo")
+        ]),
+        InlineButtonRow(buttons=[
+            InlineButton.url_button("📖 Docs", "https://github.com/astex-said/anyagent"),
+            InlineButton.url_button("🌐 Website", "https://anyagent.app")
+        ])
+    ])
     
-    # Test text message
-    request = agent_pb2.AgentRequest(
-        user_id=12345,
-        paid=False,
-        telegram_message=agent_pb2.TelegramMessage(
-            text=agent_pb2.TextContent(text="Hello, Echo Agent!")
+    yield AgentResponse(
+        telegram_message=TelegramMessage(
+            text=TextContent(text=help_text),
+            inline_keyboard=keyboard
         )
     )
-    
-    async for response in stub.ExecuteStream(iter([request])):
-        if response.telegram_message and response.telegram_message.text:
-            print(f"Response: {response.telegram_message.text.text}")
-        if response.payment_request:
-            print(f"Payment requested: {response.payment_request.key} x{response.payment_request.quantity}")
-
-if __name__ == "__main__":
-    asyncio.run(test_agent())
 ```
 
-## 🚀 Next Steps
+## 🔧 Configuration
 
-### Advanced Features
+### Environment Variables
 
-1. **Context Management** - Use `request.context` for conversation history
-2. **Database Integration** - Implement your own user data storage with `request.user_id`
-3. **Memory System** - Use `memory` field for meaningful content only (no progress bars!)
-4. **Error Handling** - Graceful error management and recovery
-5. **Rate Limiting** - Implement usage quotas and throttling
+```bash
+# gRPC server port
+GRPC_PORT=50061
 
-### Production Considerations
+# Logging level
+LOG_LEVEL=INFO
 
-1. **Monitoring** - Add logging and metrics
-2. **Scaling** - Load balancing and horizontal scaling
-3. **Security** - Input validation and sanitization
-4. **Performance** - Optimize for high throughput
-5. **Reliability** - Error recovery and fault tolerance
+# Worker threads
+MAX_WORKERS=10
+```
 
-## 📚 Complete Example
+### Docker Compose Configuration
 
-Check out our [full echo agent implementation](agent.py) that demonstrates all these concepts in action!
+```yaml
+version: '3.8'
 
-## 🤝 Need Help?
+services:
+  echo_agent:
+    build: .
+    ports:
+      - "50061:50061"
+    environment:
+      - GRPC_PORT=50061
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data  # For persistent storage
+    restart: unless-stopped
+```
 
-- 🌐 [AnyAgent Website](https://anyagent.app)
-- 📖 [Framework Documentation](../README.md)
-- 💰 [Payment System Guide](../PAYMENT_GUIDE.md)
-- 🐛 [Report Issues](https://github.com/astex-said/anyagent/issues)
+## 🧪 Testing the Agent
 
-Happy coding! 🎉
+### 1. Test Text Echo
+
+```python
+# Send any text message
+"Hello, Echo Agent!"
+
+# Expected response:
+# 🔊 Text Echo
+# 📥 Received: Hello, Echo Agent!
+# 📊 Analysis: Length: 18 characters...
+```
+
+### 2. Test Image Processing
+
+```python
+# Send any image
+# Bot will request 25 credits if not paid
+# Then echo the image with metadata
+```
+
+### 3. Test Interactive Buttons
+
+```python
+# Click "📊 Stats" button
+# Shows agent statistics
+
+# Click "🌐 Website" button
+# Opens https://anyagent.app in browser
+```
+
+### 4. Test Payment Flow
+
+```python
+# Send video without payment
+# Bot requests 100 credits
+# After payment, video is processed
+```
+
+## 📊 Credit System Details
+
+| Content Type | Credits | Description |
+|-------------|---------|-------------|
+| Text | 5 | Basic text messages |
+| Image | 25 | Photo processing |
+| Video | 100 | Video handling |
+| Audio | 50 | Voice/audio files |
+| Document | 15 | File sharing |
+| Location | 10 | Map integration |
+
+## 🚨 Error Handling
+
+The agent handles errors gracefully:
+
+```python
+try:
+    # Process request
+    async for response in handler(content, request.paid):
+        yield response
+except Exception as e:
+    self.logger.error(f"Error: {str(e)}")
+    yield AgentResponse(
+        telegram_message=TelegramMessage(
+            text=TextContent(text=f"❌ Error: {str(e)}\n\nPlease try again.")
+        )
+    )
+```
+
+## 🛠️ Development Guide
+
+### Adding New Features
+
+1. **Create a handler method**:
+```python
+async def _handle_custom_feature(self, data, paid):
+    # Your logic here
+    yield AgentResponse(...)
+```
+
+2. **Add to execute method**:
+```python
+if request.custom_field:
+    async for response in self._handle_custom_feature(request.custom_field, request.paid):
+        yield response
+```
+
+3. **Update help text** to include the new feature
+
+### Debugging
+
+Enable debug logging:
+
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+View Docker logs:
+```bash
+docker-compose logs -f echo_agent
+```
+
+## 📈 Performance Optimization
+
+- Uses async/await for non-blocking operations
+- Streams responses for better user experience
+- Implements connection pooling for gRPC
+- Minimal memory footprint
+
+## 🔄 Deployment
+
+### Production Deployment
+
+1. **Update docker-compose.yml** for production:
+```yaml
+services:
+  echo_agent:
+    image: your-registry/echo-agent:latest
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+```
+
+2. **Use environment-specific configs**:
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+3. **Monitor health**:
+```bash
+curl http://localhost:50061/health
+```
+
+## 📚 Learning Resources
+
+- [AnyAgent Documentation](https://github.com/astex-said/anyagent-framework)
+- [gRPC Python Guide](https://grpc.io/docs/languages/python/)
+- [Telegram Bot API](https://core.telegram.org/bots/api)
+- [Protocol Buffers](https://developers.google.com/protocol-buffers)
+
+## 🤝 Contributing
+
+1. Study this example implementation
+2. Create your own agent based on this template
+3. Share your agent with the community
+4. Report issues or suggest improvements
+
+## 📄 License
+
+MIT License - feel free to use this as a template for your own agents.
+
+---
+
+Built with ❤️ using AnyAgent Framework

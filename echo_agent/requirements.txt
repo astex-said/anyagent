@@ -1,2 +1,4 @@
-anyagent-ai
+# anyagent-ai from PyPI with updated protobuf
+anyagent-ai>=1.0.8
+
 # Add your specific dependencies here

@@ -73,7 +73,10 @@ enum TelegramAction {
 
 message InlineButton {
   string text = 1;
-  string callback_data = 2;
+  oneof action {
+    string callback_data = 2;
+    string url = 3;
+  }
 }
 
 message InlineButtonRow {

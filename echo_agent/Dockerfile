@@ -7,13 +7,10 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the entire project structure
-COPY . .
+# Copy echo agent files only
+COPY echo_agent/ ./echo_agent
 
-# Install anyagent package in development mode
-RUN pip install -e .
-
-# Install echo agent dependencies
+# Install echo agent dependencies (including anyagent-ai from PyPI)
 RUN pip install -r echo_agent/requirements.txt
 
 WORKDIR /app/echo_agent

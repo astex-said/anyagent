@@ -1,312 +1,489 @@
-# AnyAgent AI Framework
+# AnyAgent Framework
 
-**Simple. Fast. Production-ready.**
+[![PyPI version](https://badge.fury.io/py/anyagent-ai.svg)](https://badge.fury.io/py/anyagent-ai)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Build & Monetize AI Agents effortlessly. 
+A standardized framework for building gRPC-based AI agents that integrate seamlessly with Telegram bots. AnyAgent provides a complete SDK for handling all Telegram message types, payments, and interactive UI components.
 
-## Installation
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
 pip install anyagent-ai
 ```
 
-## Try It Live
-
-🤖 **Test on Telegram:** [@AnyAgentBot](https://t.me/anyagentbot)
-
-🔊 **Try Echo Agent:** [Start Echo Bot](https://t.me/anyagentbot?start=agent12)
-
-See how the echo agent works in real-time! This demonstrates all the message types, payment requests, and interactive features shown in the examples below.
-
-## Quick Start
+### Create Your First Agent in 5 Minutes
 
 ```python
-from anyagent import BaseAgent, AgentRequest, AgentResponse, TelegramMessage, TextContent
+from anyagent import BaseAgent, AgentResponse, TelegramMessage, TextContent
 
 class MyAgent(BaseAgent):
-    def __init__(self):
-        super().__init__()
-    
     async def execute(self, request):
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text=f"Echo: {request.telegram_message.text.text}")
+        # Echo back any text message
+        if request.telegram_message and request.telegram_message.text:
+            text = request.telegram_message.text.text
+            
+            yield AgentResponse(
+                telegram_message=TelegramMessage(
+                    text=TextContent(text=f"You said: {text}")
+                )
             )
-        )
-    
-    async def help(self, request):
-        yield AgentResponse(
-            telegram_message=TelegramMessage(
-                text=TextContent(text="I echo your messages!")
-            )
-        )
 
-# Run it
-from anyagent import AgentServer
-AgentServer(MyAgent()).run()  # Starts on port 50051
+# Run the agent
+if __name__ == "__main__":
+    from anyagent import AgentServer
+    
+    agent = MyAgent()
+    server = AgentServer(agent)
+    server.run(port=50051)
 ```
 
-## Features
+## 📖 Complete Documentation
 
-- **🚀 Zero config** - Just inherit and implement 2 methods
-- **💰 Built-in payments** - Pay-per-use with credits
-- **📱 All Telegram types** - Text, images, video, audio, documents, location
-- **🎛️ Interactive buttons** - Callbacks and keyboards
-- **🔄 Streaming responses** - Real-time message streaming
-- **🐳 Docker ready** - Production deployment included
-- **⚡ gRPC based** - High performance protocol
-- **🌐 Visit our website** - [https://anyagent.app](https://anyagent.app)
+### Architecture Overview
 
-## Payment Requests
+AnyAgent uses a gRPC-based architecture where:
+1. **Telegram Bot Server** receives messages from users
+2. **Bot Server** converts them to gRPC requests
+3. **Your Agent** processes requests and returns responses
+4. **Bot Server** sends responses back to Telegram
+
+```
+Telegram User <-> Telegram API <-> Bot Server <-> gRPC <-> Your Agent
+```
+
+### Core Concepts
+
+#### 1. BaseAgent Class
+
+All agents inherit from `BaseAgent` and implement the `execute` method:
+
+```python
+from anyagent import BaseAgent, AgentRequest, AgentResponse
+
+class MyAgent(BaseAgent):
+    async def execute(self, request: AgentRequest) -> AsyncGenerator[AgentResponse, None]:
+        # Process request and yield responses
+        pass
+```
+
+#### 2. Request Structure
+
+Every request contains:
+- `telegram_message`: Incoming message (text, image, video, etc.)
+- `callback_query`: Button press events
+- `reply_message`: When user replies to a message
+- `context`: Conversation history and metadata
+- `paid`: Payment status
+- `language_code`: User's language
+- `user_id`: Unique user identifier
+
+#### 3. Response Structure
+
+Responses can contain:
+- `telegram_message`: Message to send back
+- `payment_request`: Request payment from user
+- `memory`: Store conversation context
+
+### 📋 Supported Message Types
+
+#### Text Messages
+```python
+from anyagent import TelegramMessage, TextContent
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        text=TextContent(text="Hello, World!")
+    )
+)
+```
+
+#### Images
+```python
+from anyagent import ImageContent
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        image=ImageContent(
+            image_data=image_bytes,
+            caption="A beautiful image",
+            filename="image.jpg"
+        )
+    )
+)
+```
+
+#### Videos
+```python
+from anyagent import VideoContent
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        video=VideoContent(
+            video_data=video_bytes,
+            caption="Check out this video",
+            filename="video.mp4"
+        )
+    )
+)
+```
+
+#### Audio
+```python
+from anyagent import AudioContent
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        audio=AudioContent(
+            audio_data=audio_bytes,
+            filename="audio.mp3"
+        )
+    )
+)
+```
+
+#### Documents
+```python
+from anyagent import DocumentContent
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        document=DocumentContent(
+            file_data=file_bytes,
+            filename="document.pdf"
+        )
+    )
+)
+```
+
+#### Locations
+```python
+from anyagent import LocationContent
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        location=LocationContent(
+            latitude=37.7749,
+            longitude=-122.4194
+        )
+    )
+)
+```
+
+### 🎛️ Interactive UI Components
+
+#### Inline Keyboards
+
+Create interactive buttons for users:
+
+```python
+from anyagent import InlineKeyboard, InlineButtonRow, InlineButton
+
+keyboard = InlineKeyboard(rows=[
+    InlineButtonRow(buttons=[
+        InlineButton.callback_button("✅ Accept", "accept"),
+        InlineButton.callback_button("❌ Decline", "decline")
+    ]),
+    InlineButtonRow(buttons=[
+        InlineButton.url_button("📖 Documentation", "https://docs.example.com"),
+        InlineButton.url_button("🌐 Website", "https://example.com")
+    ])
+])
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        text=TextContent(text="Please choose an option:"),
+        inline_keyboard=keyboard
+    )
+)
+```
+
+#### Handling Button Clicks
+
+```python
+async def execute(self, request):
+    if request.callback_query:
+        callback_data = request.callback_query.callback_data
+        
+        if callback_data == "accept":
+            yield AgentResponse(
+                telegram_message=TelegramMessage(
+                    text=TextContent(text="You accepted! ✅")
+                )
+            )
+        elif callback_data == "decline":
+            yield AgentResponse(
+                telegram_message=TelegramMessage(
+                    text=TextContent(text="You declined ❌")
+                )
+            )
+```
+
+### 💰 Payment System
+
+Request payments for premium features:
 
 ```python
 from anyagent import UsagePaymentRequest
 
-async def execute(self, request):
-    # Request payment for processing
-    if not request.paid:
-        yield AgentResponse(
-            payment_request=UsagePaymentRequest(
-                key="text_analysis",  # Payment key (pricing configured in web console)
-                quantity=1  # Quantity of operations (1 text analysis)
-            )
+# Check if user has paid
+if not request.paid:
+    yield AgentResponse(
+        payment_request=UsagePaymentRequest(
+            key="premium_feature",  # Payment key from web console
+            quantity=1  # Number of uses
         )
-    
-    # Process after payment
-    result = analyze_text(request.telegram_message.text.text)
+    )
+else:
+    # Provide premium feature
     yield AgentResponse(
         telegram_message=TelegramMessage(
-            text=TextContent(text=result)
+            text=TextContent(text="Premium feature activated! 🌟")
         )
     )
 ```
 
-## Interactive Buttons
+### 🧠 Context and Memory
+
+Store conversation history:
 
 ```python
-from anyagent import InlineKeyboard
+from anyagent import ContextMessage
 
-async def execute(self, request):
-    # Handle button clicks
-    if request.callback_query:
-        data = request.callback_query.callback_data
-        if data == "action1":
-            yield AgentResponse(
-                telegram_message=TelegramMessage(
-                    text=TextContent(text="Button 1 clicked!")
-                )
-            )
-        return
-    
-    # Send message with buttons
-    yield AgentResponse(
-        telegram_message=TelegramMessage(
-            text=TextContent(text="Choose an action:"),
-            inline_keyboard=InlineKeyboard(rows=[
-                {"buttons": [
-                    {"text": "Action 1", "callback_data": "action1"},
-                    {"text": "Action 2", "callback_data": "action2"}
-                ]}
-            ])
-        )
-    )
-```
-
-## All Message Types
-
-```python
-async def execute(self, request):
-    message = request.telegram_message
-    
-    if message.text:
-        # Handle text
-        text = message.text.text
-        yield AgentResponse(...)
-    
-    elif message.image:
-        # Handle image
-        image_data = message.image.image_data
-        filename = message.image.filename
-        yield AgentResponse(...)
-    
-    elif message.video:
-        # Handle video
-        video_data = message.video.video_data
-        yield AgentResponse(...)
-    
-    elif message.audio:
-        # Handle audio
-        audio_data = message.audio.audio_data
-        yield AgentResponse(...)
-    
-    elif message.document:
-        # Handle document
-        file_data = message.document.file_data
-        yield AgentResponse(...)
-    
-    elif message.location:
-        # Handle location
-        lat = message.location.latitude
-        lon = message.location.longitude
-        yield AgentResponse(...)
-```
-
-## Deployment
-
-### Docker
-
-```dockerfile
-FROM python:3.11-slim
-COPY . /app
-WORKDIR /app
-RUN pip install anyagent
-CMD ["python", "agent.py"]
-```
-
-```bash
-docker build -t my-agent .
-docker run -p 50051:50051 my-agent
-```
-
-### Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  agent:
-    build: .
-    ports:
-      - "50051:50051"
-    restart: unless-stopped
-```
-
-## Architecture
-
-```
-Client (Telegram Bot) 
-    ↓ gRPC
-Your Agent (Python)
-    ↓ 
-AnyAgent Framework
-    ↓ Protocol Buffers
-Agent Server (gRPC)
-```
-
-## API Reference
-
-### BaseAgent
-
-```python
-class BaseAgent:
-    def __init__(self)
-    async def execute(self, request: AgentRequest) -> AsyncGenerator[AgentResponse, None]
-    async def help(self, request: AgentRequest) -> AsyncGenerator[AgentResponse, None]
-```
-
-### AgentRequest
-
-```python
-class AgentRequest:
-    telegram_message: Optional[TelegramMessage]  # User's message
-    callback_query: Optional[CallbackQuery]      # Button clicks
-    user_id: int                                 # User identifier
-    paid: bool                                   # Payment status
-    language_code: Optional[str]                 # User's language
-    context: Optional[Context]                   # Conversation history
-```
-
-**Context Structure:**
-- `context.messages` - Full conversation history (user ↔ assistant messages)
-- `context.system_messages` - System context for personalization (optional):
-  - First message: Current date/time in user's timezone
-  - Second message: User's custom instructions/preferences
-
-### AgentResponse
-
-```python
-class AgentResponse:
-    telegram_message: Optional[TelegramMessage]     # Message to send
-    payment_request: Optional[UsagePaymentRequest]  # Request payment
-    memory: Optional[ContextMessage]                # Add assistant's response to conversation history
-```
-
-**Memory System:** 
-- `context.messages` in `AgentRequest` contains the full conversation history
-- `memory` field in `AgentResponse` adds your agent's response to this history
-- Only store meaningful content (final answers, analysis results)
-- Don't store progress updates, loading messages, or temporary UI elements
-
-```python
-# Example: Final response with memory
+# Store assistant's response in memory
 yield AgentResponse(
     telegram_message=TelegramMessage(
-        text=TextContent(text="Analysis complete: The image shows a cat")
+        text=TextContent(text="I'll remember that!")
     ),
     memory=ContextMessage(
         role="assistant",
-        content="Image analysis: The image shows a cat sitting on a windowsill"
+        content="User's favorite color is blue"
+    )
+)
+
+# Access previous context
+if request.context:
+    for message in request.context.messages:
+        print(f"{message.role}: {message.content}")
+```
+
+### 🎭 Bot Actions
+
+Show typing indicators:
+
+```python
+from anyagent import TelegramAction
+
+yield AgentResponse(
+    telegram_message=TelegramMessage(
+        text=TextContent(text="Processing your request..."),
+        action=TelegramAction.TYPING
     )
 )
 ```
 
-### TelegramMessage
+Available actions:
+- `TYPING` - Shows "typing..." indicator
+- `UPLOADING_PHOTO` - Shows "uploading photo..." indicator
+- `UPLOADING_VIDEO` - Shows "uploading video..." indicator
+- `UPLOADING_DOCUMENT` - Shows "uploading document..." indicator
+- `UPLOADING_AUDIO` - Shows "uploading audio..." indicator
+- `RECORDING_VIDEO` - Shows "recording video..." indicator
+- `RECORDING_AUDIO` - Shows "recording audio..." indicator
+
+### 🔄 Streaming Responses
+
+For real-time responses:
 
 ```python
-class TelegramMessage:
-    text: Optional[TextContent]
-    image: Optional[ImageContent]
-    video: Optional[VideoContent]
-    audio: Optional[AudioContent]
-    document: Optional[DocumentContent]
-    location: Optional[LocationContent]
-    inline_keyboard: Optional[InlineKeyboard]
-    action: Optional[TelegramAction]
-```
-
-### UsagePaymentRequest
-
-```python
-class UsagePaymentRequest:
-    key: str      # Payment key identifier (configured in web console)
-    quantity: int # Number of operations (e.g., 60 for 60 minutes of audio processing)
-```
-
-## Examples
-
-See the [echo_agent](echo_agent/) directory for a complete example demonstrating all features.
-
-## Testing
-
-```python
-import grpc
-from anyagent.proto import agent_pb2, agent_pb2_grpc
-
-# Test your agent
-channel = grpc.aio.insecure_channel("localhost:50051")
-stub = agent_pb2_grpc.AgentServiceStub(channel)
-
-request = agent_pb2.AgentRequest(
-    user_id=12345,
-    paid=False,
-    telegram_message=agent_pb2.TelegramMessage(
-        text=agent_pb2.TextContent(text="Hello!")
+async def execute(self, request):
+    # Send initial message
+    yield AgentResponse(
+        telegram_message=TelegramMessage(
+            text=TextContent(text="Processing"),
+            action=TelegramAction.TYPING
+        )
     )
-)
-
-async for response in stub.ExecuteStream(iter([request])):
-    print(response)
+    
+    # Stream updates
+    for i in range(5):
+        await asyncio.sleep(1)
+        yield AgentResponse(
+            telegram_message=TelegramMessage(
+                text=TextContent(text=f"Progress: {i+1}/5")
+            )
+        )
 ```
 
-## Philosophy
+### 🚀 Deployment
 
-AnyAgent follows the "numpy approach" - minimal required parameters, maximum flexibility. No forced metadata, no complex configuration. Just implement `execute()` and `help()`, and you're done.
+#### Using Docker
 
-## License
+1. Create a `Dockerfile`:
 
-MIT License - build anything you want.
+```dockerfile
+FROM python:3.10-slim
 
-## Links
+WORKDIR /app
 
-- 🌐 [Website](https://anyagent.app)
-- 🐙 [GitHub](https://github.com/astex-said/anyagent)
-- 📦 [PyPI](https://pypi.org/project/anyagent-ai/)
+# Install dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy agent code
+COPY . .
+
+# Expose gRPC port
+EXPOSE 50051
+
+# Run the agent
+CMD ["python", "agent.py"]
+```
+
+2. Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  my_agent:
+    build: .
+    ports:
+      - "50051:50051"
+    environment:
+      - GRPC_PORT=50051
+    restart: unless-stopped
+```
+
+3. Deploy:
+
+```bash
+docker-compose up -d
+```
+
+#### Environment Variables
+
+- `GRPC_PORT` - Port for gRPC server (default: 50051)
+- `MAX_WORKERS` - Number of worker threads (default: 10)
+
+### 🛠️ Advanced Features
+
+#### Custom Help Handler
+
+```python
+class MyAgent(BaseAgent):
+    async def help(self, request):
+        """Custom help command handler"""
+        yield AgentResponse(
+            telegram_message=TelegramMessage(
+                text=TextContent(text="""
+🤖 MyAgent Help
+
+Commands:
+/start - Start the bot
+/help - Show this help
+/status - Check status
+
+Send me any message and I'll help you!
+                """)
+            )
+        )
+```
+
+#### Error Handling
+
+```python
+async def execute(self, request):
+    try:
+        # Your logic here
+        pass
+    except Exception as e:
+        yield AgentResponse(
+            telegram_message=TelegramMessage(
+                text=TextContent(text=f"❌ Error: {str(e)}")
+            )
+        )
+```
+
+#### Logging
+
+```python
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class MyAgent(BaseAgent):
+    async def execute(self, request):
+        logger.info(f"Received request from user {request.user_id}")
+        # Your logic here
+```
+
+### 🐛 Troubleshooting
+
+#### Common Issues
+
+1. **"No module named 'anyagent'"**
+   - Solution: `pip install anyagent-ai`
+
+2. **"Protocol message InlineButton has no 'action' field"**
+   - Solution: Update to anyagent-ai>=1.0.8
+   - Use `button.HasField('url')` instead of checking `action` field
+
+3. **Connection refused on port 50051**
+   - Check if agent is running: `docker ps`
+   - Check logs: `docker logs <container_name>`
+   - Ensure port is exposed in Dockerfile
+
+4. **Import errors with protobuf**
+   - Solution: `pip install --upgrade protobuf grpcio grpcio-tools`
+
+#### Debug Mode
+
+Enable detailed logging:
+
+```python
+import logging
+logging.getLogger('anyagent').setLevel(logging.DEBUG)
+```
+
+### 📚 Examples
+
+Check out the [echo_agent](./echo_agent) directory for a complete example that demonstrates:
+- All message types (text, image, video, audio, document, location)
+- Interactive keyboards and button handling
+- Payment system integration
+- Context and memory management
+- Streaming responses
+- Error handling
+
+### 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit changes: `git commit -am 'Add feature'`
+4. Push to branch: `git push origin feature-name`
+5. Submit a pull request
+
+### 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+### 🔗 Links
+
+- [PyPI Package](https://pypi.org/project/anyagent-ai/)
+- [GitHub Repository](https://github.com/astex-said/anyagent-framework)
+- [Live Demo Bot](https://t.me/AnyAgentDemoBot)
+- [AnyAgent Platform](https://anyagent.app)
+
+### 💬 Support
+
+- Telegram: [@saidaziz](https://t.me/saidaziz)
+- Email: astexlab@gmail.com
+- Issues: [GitHub Issues](https://github.com/astex-said/anyagent-framework/issues)
+
+---
+
+Built with ❤️ by the AnyAgent Team
